@@ -6,8 +6,9 @@ const router: Router = express.Router();
 
 router.post('/register', validate(authValidation.register), authController.register);
 router.post('/login', validate(authValidation.login), authController.login);
-router.post('/logout', validate(authValidation.logout), authController.logout);
-router.post('/refresh-tokens', validate(authValidation.refreshTokens), authController.refreshTokens);
+router.post('/logout', authController.logout);
+router.post('/refresh-tokens', authController.refreshTokens);
+router.get('/me', auth(), authController.me);
 router.post('/forgot-password', validate(authValidation.forgotPassword), authController.forgotPassword);
 router.post('/reset-password', validate(authValidation.resetPassword), authController.resetPassword);
 router.post('/send-verification-email', auth(), authController.sendVerificationEmail);
@@ -48,15 +49,15 @@ export default router;
  *               password:
  *                 type: string
  *                 format: password
- *                 minLength: 8
- *                 description: At least one number and one letter
+ *                 minLength: 4
+ *                 description: Minimum 4 characters
  *             example:
  *               name: fake name
  *               email: fake@example.com
- *               password: password1
+ *               password: pass
  *     responses:
  *       "201":
- *         description: Created
+ *         description: Created. Sets the httpOnly auth cookies (access_token, refresh_token).
  *         content:
  *           application/json:
  *             schema:
@@ -64,8 +65,6 @@ export default router;
  *               properties:
  *                 user:
  *                   $ref: '#/components/schemas/User'
- *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
  *       "400":
  *         $ref: '#/components/responses/DuplicateEmail'
  */
@@ -97,7 +96,7 @@ export default router;
  *               password: password1
  *     responses:
  *       "200":
- *         description: OK
+ *         description: OK. Sets the httpOnly auth cookies (access_token, refresh_token).
  *         content:
  *           application/json:
  *             schema:
@@ -105,8 +104,6 @@ export default router;
  *               properties:
  *                 user:
  *                   $ref: '#/components/schemas/User'
- *                 tokens:
- *                   $ref: '#/components/schemas/AuthTokens'
  *       "401":
  *         description: Invalid email or password
  *         content:
@@ -123,20 +120,8 @@ export default router;
  * /auth/logout:
  *   post:
  *     summary: Logout
+ *     description: Clears the auth cookies and revokes the refresh_token cookie if present.
  *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - refreshToken
- *             properties:
- *               refreshToken:
- *                 type: string
- *             example:
- *               refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZWJhYzUzNDk1NGI1NDEzOTgwNmMxMTIiLCJpYXQiOjE1ODkyOTg0ODQsImV4cCI6MTU4OTMwMDI4NH0.m1U63blB0MLej_WfB7yC2FTMnCziif9X8yzwDEfJXAg
  *     responses:
  *       "204":
  *         description: No content
@@ -149,27 +134,41 @@ export default router;
  * /auth/refresh-tokens:
  *   post:
  *     summary: Refresh auth tokens
+ *     description: Reads the refresh_token cookie and sets new auth cookies.
  *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - refreshToken
- *             properties:
- *               refreshToken:
- *                 type: string
- *             example:
- *               refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZWJhYzUzNDk1NGI1NDEzOTgwNmMxMTIiLCJpYXQiOjE1ODkyOTg0ODQsImV4cCI6MTU4OTMwMDI4NH0.m1U63blB0MLej_WfB7yC2FTMnCziif9X8yzwDEfJXAg
+ *     responses:
+ *       "200":
+ *         description: OK. Sets new httpOnly auth cookies.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get the current session user
+ *     description: Returns the authenticated user from the access_token cookie or an Authorization header.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       "200":
  *         description: OK
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/UserWithTokens'
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
  */
@@ -227,10 +226,10 @@ export default router;
  *               password:
  *                 type: string
  *                 format: password
- *                 minLength: 8
- *                 description: At least one number and one letter
+ *                 minLength: 4
+ *                 description: Minimum 4 characters
  *             example:
- *               password: password1
+ *               password: pass
  *     responses:
  *       "204":
  *         description: No content

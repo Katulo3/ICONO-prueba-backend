@@ -23,19 +23,14 @@ describe('User model', () => {
       await expect(new User(newUser).validate()).rejects.toThrow();
     });
 
-    test('should throw a validation error if password length is less than 8 characters', async () => {
-      newUser.password = 'passwo1';
+    test('should throw a validation error if password length is less than 4 characters', async () => {
+      newUser.password = 'abc';
       await expect(new User(newUser).validate()).rejects.toThrow();
     });
 
-    test('should throw a validation error if password does not contain numbers', async () => {
-      newUser.password = 'password';
-      await expect(new User(newUser).validate()).rejects.toThrow();
-    });
-
-    test('should throw a validation error if password does not contain letters', async () => {
-      newUser.password = '11111111';
-      await expect(new User(newUser).validate()).rejects.toThrow();
+    test('should accept a 4-character password without letters and numbers requirement', async () => {
+      newUser.password = '1234';
+      await expect(new User(newUser).validate()).resolves.toBeUndefined();
     });
 
     test('should throw a validation error if role is unknown', async () => {

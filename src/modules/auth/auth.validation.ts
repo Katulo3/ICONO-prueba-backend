@@ -19,18 +19,6 @@ export const login = {
   }),
 };
 
-export const logout = {
-  body: Joi.object().keys({
-    refreshToken: Joi.string().required(),
-  }),
-};
-
-export const refreshTokens = {
-  body: Joi.object().keys({
-    refreshToken: Joi.string().required(),
-  }),
-};
-
 export const forgotPassword = {
   body: Joi.object().keys({
     email: Joi.string().email().required(),

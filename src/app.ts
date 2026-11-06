@@ -4,6 +4,7 @@ import xss from 'xss-clean';
 import ExpressMongoSanitize from 'express-mongo-sanitize';
 import compression from 'compression';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import httpStatus from 'http-status';
 import config from './config/config';
@@ -23,9 +24,13 @@ if (config.env !== 'test') {
 // set security HTTP headers
 app.use(helmet());
 
-// enable cors
-app.use(cors());
-app.options('*', cors());
+// enable cors; credentials are required so the browser sends the httpOnly auth cookies
+const corsOptions = { origin: config.clientUrl, credentials: true };
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// parse cookies (used for the httpOnly auth tokens)
+app.use(cookieParser());
 
 // parse json request body
 app.use(express.json());

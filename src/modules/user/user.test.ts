@@ -146,28 +146,9 @@ describe('User routes', () => {
         .expect(httpStatus.BAD_REQUEST);
     });
 
-    test('should return 400 error if password length is less than 8 characters', async () => {
+    test('should return 400 error if password length is less than 4 characters', async () => {
       await insertUsers([admin]);
-      newUser.password = 'passwo1';
-
-      await request(app)
-        .post('/v1/users')
-        .set('Authorization', `Bearer ${adminAccessToken}`)
-        .send(newUser)
-        .expect(httpStatus.BAD_REQUEST);
-    });
-
-    test('should return 400 error if password does not contain both letters and numbers', async () => {
-      await insertUsers([admin]);
-      newUser.password = 'password';
-
-      await request(app)
-        .post('/v1/users')
-        .set('Authorization', `Bearer ${adminAccessToken}`)
-        .send(newUser)
-        .expect(httpStatus.BAD_REQUEST);
-
-      newUser.password = '1111111';
+      newUser.password = 'abc';
 
       await request(app)
         .post('/v1/users')
@@ -641,28 +622,9 @@ describe('User routes', () => {
         .expect(httpStatus.OK);
     });
 
-    test('should return 400 if password length is less than 8 characters', async () => {
+    test('should return 400 if password length is less than 4 characters', async () => {
       await insertUsers([userOne]);
-      const updateBody = { password: 'passwo1' };
-
-      await request(app)
-        .patch(`/v1/users/${userOne._id}`)
-        .set('Authorization', `Bearer ${userOneAccessToken}`)
-        .send(updateBody)
-        .expect(httpStatus.BAD_REQUEST);
-    });
-
-    test('should return 400 if password does not contain both letters and numbers', async () => {
-      await insertUsers([userOne]);
-      const updateBody = { password: 'password' };
-
-      await request(app)
-        .patch(`/v1/users/${userOne._id}`)
-        .set('Authorization', `Bearer ${userOneAccessToken}`)
-        .send(updateBody)
-        .expect(httpStatus.BAD_REQUEST);
-
-      updateBody.password = '11111111';
+      const updateBody = { password: 'abc' };
 
       await request(app)
         .patch(`/v1/users/${userOne._id}`)

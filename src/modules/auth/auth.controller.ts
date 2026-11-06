@@ -5,28 +5,45 @@ import { tokenService } from '../token';
 import { userService } from '../user';
 import * as authService from './auth.service';
 import { emailService } from '../email';
+import { ApiError } from '../errors';
+import { clearAuthCookies, REFRESH_TOKEN_COOKIE, setAuthCookies } from './auth.cookies';
 
 export const register = catchAsync(async (req: Request, res: Response) => {
   const user = await userService.registerUser(req.body);
   const tokens = await tokenService.generateAuthTokens(user);
-  res.status(httpStatus.CREATED).send({ user, tokens });
+  setAuthCookies(res, tokens);
+  res.status(httpStatus.CREATED).send({ user });
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const user = await authService.loginUserWithEmailAndPassword(email, password);
   const tokens = await tokenService.generateAuthTokens(user);
-  res.send({ user, tokens });
+  setAuthCookies(res, tokens);
+  res.send({ user });
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
-  await authService.logout(req.body.refreshToken);
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+  clearAuthCookies(res);
+  if (refreshToken) {
+    await authService.logout(refreshToken);
+  }
   res.status(httpStatus.NO_CONTENT).send();
 });
 
 export const refreshTokens = catchAsync(async (req: Request, res: Response) => {
-  const userWithTokens = await authService.refreshAuth(req.body.refreshToken);
-  res.send({ ...userWithTokens });
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+  if (!refreshToken) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
+  }
+  const { user, tokens } = await authService.refreshAuth(refreshToken);
+  setAuthCookies(res, tokens);
+  res.send({ user });
+});
+
+export const me = catchAsync(async (req: Request, res: Response) => {
+  res.send({ user: req.user });
 });
 
 export const forgotPassword = catchAsync(async (req: Request, res: Response) => {
