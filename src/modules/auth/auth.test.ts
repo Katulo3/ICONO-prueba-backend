@@ -75,7 +75,10 @@ describe('Auth routes', () => {
 
       expect(getSetCookie(res, 'access_token')).toEqual(expect.stringContaining('HttpOnly'));
       expect(getSetCookie(res, 'refresh_token')).toEqual(expect.stringContaining('HttpOnly'));
-      expect(res.body).not.toHaveProperty('tokens');
+      expect(res.body.tokens).toEqual({
+        access: { token: expect.anything(), expires: expect.anything() },
+        refresh: { token: expect.anything(), expires: expect.anything() },
+      });
     });
 
     test('should return 400 error if email is invalid', async () => {
@@ -124,7 +127,10 @@ describe('Auth routes', () => {
 
       expect(getSetCookie(res, 'access_token')).toEqual(expect.stringContaining('HttpOnly'));
       expect(getSetCookie(res, 'refresh_token')).toEqual(expect.stringContaining('HttpOnly'));
-      expect(res.body).not.toHaveProperty('tokens');
+      expect(res.body.tokens).toEqual({
+        access: { token: expect.anything(), expires: expect.anything() },
+        refresh: { token: expect.anything(), expires: expect.anything() },
+      });
     });
 
     test('should return 401 error if there are no users with that email', async () => {
@@ -217,7 +223,10 @@ describe('Auth routes', () => {
         role: userOne.role,
         isEmailVerified: userOne.isEmailVerified,
       });
-      expect(res.body).not.toHaveProperty('tokens');
+      expect(res.body.tokens).toEqual({
+        access: { token: expect.anything(), expires: expect.anything() },
+        refresh: { token: expect.anything(), expires: expect.anything() },
+      });
 
       expect(getSetCookie(res, 'access_token')).toEqual(expect.stringContaining('HttpOnly'));
       const newRefreshToken = getCookieValue(res, 'refresh_token');
