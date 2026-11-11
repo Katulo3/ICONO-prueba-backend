@@ -12,7 +12,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   const user = await userService.registerUser(req.body);
   const tokens = await tokenService.generateAuthTokens(user);
   setAuthCookies(res, tokens);
-  res.status(httpStatus.CREATED).send({ user });
+  res.status(httpStatus.CREATED).send({ user, tokens });
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
@@ -20,11 +20,11 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   const user = await authService.loginUserWithEmailAndPassword(email, password);
   const tokens = await tokenService.generateAuthTokens(user);
   setAuthCookies(res, tokens);
-  res.send({ user });
+  res.send({ user, tokens });
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
-  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE] ?? req.body?.refreshToken;
   clearAuthCookies(res);
   if (refreshToken) {
     await authService.logout(refreshToken);
@@ -33,13 +33,13 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const refreshTokens = catchAsync(async (req: Request, res: Response) => {
-  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE] ?? req.body?.refreshToken;
   if (!refreshToken) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
   const { user, tokens } = await authService.refreshAuth(refreshToken);
   setAuthCookies(res, tokens);
-  res.send({ user });
+  res.send({ user, tokens });
 });
 
 export const me = catchAsync(async (req: Request, res: Response) => {
