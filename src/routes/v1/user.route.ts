@@ -182,7 +182,7 @@ export default router;
  *
  *   patch:
  *     summary: Update a user
- *     description: Logged in users can only update their own information. Only admins can update other users.
+ *     description: Logged in users can only update their own name and email. Passwords of other users can only be changed by admins, and users cannot change their own password. Only admins can update other users.
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []

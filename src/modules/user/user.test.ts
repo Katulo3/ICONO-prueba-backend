@@ -513,7 +513,6 @@ describe('User routes', () => {
       const updateBody = {
         name: faker.name.findName(),
         email: faker.internet.email().toLowerCase(),
-        password: 'newPassword1',
       };
 
       const res = await request(app)
@@ -534,8 +533,48 @@ describe('User routes', () => {
       const dbUser = await User.findById(userOne._id);
       expect(dbUser).toBeDefined();
       if (!dbUser) return;
-      expect(dbUser.password).not.toBe(updateBody.password);
       expect(dbUser).toMatchObject({ name: updateBody.name, email: updateBody.email, role: 'user' });
+    });
+
+    test('should return 403 if user tries to change their own password', async () => {
+      await insertUsers([userOne]);
+      const updateBody = { password: 'newPassword1' };
+      const passwordBefore = (await User.findById(userOne._id))?.password;
+
+      await request(app)
+        .patch(`/v1/users/${userOne._id}`)
+        .set('Authorization', `Bearer ${userOneAccessToken}`)
+        .send(updateBody)
+        .expect(httpStatus.FORBIDDEN);
+
+      const dbUser = await User.findById(userOne._id);
+      expect(dbUser?.password).toBe(passwordBefore);
+    });
+
+    test('should return 403 if admin tries to change their own password', async () => {
+      await insertUsers([admin]);
+      const updateBody = { password: 'newPassword1' };
+
+      await request(app)
+        .patch(`/v1/users/${admin._id}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send(updateBody)
+        .expect(httpStatus.FORBIDDEN);
+    });
+
+    test('should return 200 and update the password if admin changes another user password', async () => {
+      await insertUsers([userOne, admin]);
+      const updateBody = { password: 'newPassword1' };
+      const passwordBefore = (await User.findById(userOne._id))?.password;
+
+      await request(app)
+        .patch(`/v1/users/${userOne._id}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send(updateBody)
+        .expect(httpStatus.OK);
+
+      const dbUser = await User.findById(userOne._id);
+      expect(dbUser?.password).not.toBe(passwordBefore);
     });
 
     test('should return 401 error if access token is missing', async () => {

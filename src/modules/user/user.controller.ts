@@ -31,6 +31,11 @@ export const getUser = catchAsync(async (req: Request, res: Response) => {
 
 export const updateUser = catchAsync(async (req: Request, res: Response) => {
   if (typeof req.params['userId'] === 'string') {
+    // Users can only change their own name and email; passwords are managed for other users by admins.
+    const isSelf = req.user.id === req.params['userId'];
+    if (isSelf && req.body.password !== undefined) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+    }
     const user = await userService.updateUserById(new mongoose.Types.ObjectId(req.params['userId']), req.body);
     res.send(user);
   }
